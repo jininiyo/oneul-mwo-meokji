@@ -1,22 +1,22 @@
-# 오늘 뭐먹지? v31 — BC카드 eat.pl k-skill 연동
+# 오늘 뭐먹지? v34 — 실제 도보 경로 계산
 
-## 변경 사항
-- `/api/eatpl/search`가 공개된 k-skill 프록시의 GET `/v1/bccard-eatpl/search`를 서버 측에서 호출합니다.
-- 앱은 기존 `/api/eatpl/search`를 그대로 사용하므로 GitHub에 이 파일들을 덮어쓰기 업로드하면 Vercel이 자동 재배포합니다.
-- API 인증값을 프런트엔드에 노출하지 않습니다. 프록시의 운영 설정은 프록시 운영 주체가 담당합니다.
-- 프록시 응답에서 실제 eat.pl 상세 URL이 있는 가맹점만 표시하며 URL을 변경하지 않습니다.
+기존 v33의 설문/정산/추천 기능을 유지하고 GPS 출발지와 식당 주소를 이용해 도보 경로를 계산하는 서버 엔드포인트 `api/eatpl/walk.js`를 추가했습니다.
 
-## 업데이트
-1. ZIP 압축을 풉니다.
-2. 기존 GitHub 저장소 `oneul-mwo-meokji`에서 `api/eatpl/search.js`, `api/health.js`, `index.html`을 같은 경로로 교체합니다.
-3. Commit changes 후 Vercel의 자동 재배포를 기다립니다.
-4. `https://oneul-mwo-meokji-one.vercel.app/api/health`에서 `mode: kskill-proxy`를 확인합니다.
-5. `/api/eatpl/search?location=서울%20중구`에서 실제 `items`가 반환되는지 확인합니다.
-6. 앱 추천 결과에서 실제 검색과 eat.pl 상세 링크 클릭을 테스트합니다.
+## 배포
+1. ZIP의 `index.html`, `api/` 및 `vercel.json`을 기존 GitHub 저장소의 같은 경로에 덮어쓰기. 기존에만 있는 파일은 삭제하지 않기.
+2. TMAP 개발자 포털에서 보행자 경로안내 API 이용 권한과 앱 키를 발급.
+3. Vercel 프로젝트 Settings → Environment Variables에서 `TMAP_APP_KEY`를 서버 환경변수로 등록. 키는 HTML/GitHub에 넣지 않기.
+4. Vercel 재배포. HTTPS 모바일 브라우저에서 현재 위치 권한 허용 후 설문 진행.
 
-## 주의
-- k-skill 프록시가 현재 인증 및 upstream 연결을 완료했는지는 이 빌드 환경에서 검증하지 못했습니다.
-- 응답 구조는 공개 instruction.md를 기준으로 다수의 배열 형태를 수용하도록 작성했습니다. 실제 응답이 다르면 추가 수정이 필요합니다.
-- 공모전 유입은 실제 사용자가 등록된 도메인에서 외부 브라우저로 상세 URL에 직접 방문해야 집계됩니다.
-- 공개 저장소에 기관코드, 비밀키를 업로드하지 마세요.
-- 참고: https://github.com/NomaDamas/k-skill/tree/main/bccard-eatpl-search
+## 작동
+- GPS 위치를 허용하면 실제 좌표를 이용하고, 식당 주소는 OpenStreetMap Nominatim으로 좌표 변환합니다.
+- 상위 최대 5개 후보에 TMAP 보행자 경로 API를 요청합니다.
+- 계산에 성공한 곳만 '🚶 도보 N분 · Nm'을 표시하고, 선택한 도보 제한을 넘는 결과는 제외합니다.
+- 경로를 확인하지 못한 후보는 이동시간 미확인으로 남겨 두며, 직선거리를 도보시간으로 둔갑시키지 않습니다.
+- GPS를 거부하거나 지역명을 수동 입력하면 지역 기반 식당 검색은 되지만 정확한 출발 좌표가 없으므로 도보시간은 표시하지 않습니다.
+- Nominatim 공용 서버는 사용량 제한이 있어 소규모 테스트용입니다. 서비스 확장 시 이용 정책에 맞는 지오코딩 공급자로 교체하세요.
+- TMAP 키가 없으면 도보 경로를 계산할 수 없습니다. 무료 제공량/이용 조건은 발급 시 확인하세요.
+- 현재 위치 및 좌표는 요청 처리에만 사용하며 브라우저 저장소에 저장하지 않습니다.
+
+## 검증 범위
+정적 JavaScript 구문 검사를 통과했습니다. 실제 Vercel + TMAP 키를 이용한 경로 응답은 배포 후 검증이 필요합니다.
