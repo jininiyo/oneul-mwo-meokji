@@ -1,5 +1,1 @@
-module.exports = async function handler(req,res) {
-  res.setHeader('Cache-Control','no-store');
-  if(req.method!=='GET') return res.status(405).json({message:'GET 요청만 지원합니다.'});
-  return res.status(200).json({ok:true,configured:!!process.env.EATPL_INST_NM,mode:process.env.EATPL_INST_NM?'partner':'unconfigured'});
-};
+module.exports=async function handler(req,res){res.setHeader('Cache-Control','no-store');return res.status(200).json({ok:true,configured:true,mode:'kskill-proxy',note:'실제 검색 성공 여부는 /api/eatpl/search?location=서울%20중구 에서 별도 확인해야 합니다.'})};
